@@ -133,13 +133,15 @@ Conflicts are possible with mods that rewrite the crop blocks, replace the plant
 
 [line]
 
-[heading][color=#e8892a]Known limitations[/color][/heading]
+[heading][color=#e8892a]Known issues[/color][/heading]
+
+[b]Please read this section before reporting a problem.[/b]
 
 [list]
-[*]Multiplayer has not been play-tested yet. The harvest request is sent from the client to the host or server, and wild regrowth runs on the hosting side. Install the same version on the host or server and on every client.
-[*]Progress for challenges such as gathering crops, and experience for harvesting, are not credited by the E harvest yet. Use the normal melee harvest if you need quest or challenge progress.
-[*]The biome decoration for wild crops only applies to worlds generated with the mod installed. Existing worlds use the regrowth system instead.
-[*]Placing crops from the creative menu places the wild variant of a plant, which yields the wild amounts.
+[*][b]Multiplayer has not been play-tested yet.[/b] The harvest request is sent from the client to the host or server, and the wild growth system runs on the hosting side. Install the same version on the host or server and on every client.
+[*][b]Experience and challenge progress[/b] for harvesting are not credited by the [b]E[/b] harvest yet. Use the normal melee harvest if you need quest or challenge progress.
+[*][b]Biome decoration[/b] for wild crops only applies to worlds generated with the mod installed. Existing worlds use the regrowth system instead.
+[*][b]Creative menu:[/b] placing a plant places the wild variant of that plant, which yields the wild amounts.
 [/list]
 
 [line]
@@ -180,3 +182,5 @@ FarmSense uses Harmony to add the harvest interaction, which 7 Days to Die ships
 [heading][color=#e8892a]Permissions[/color][/heading]
 
 You may modify this mod and include it in other projects, such as overhauls, as long as [b]Eltern vs Zombies[/b] is credited as the original author of the mod.
+
+Source code: [url=https://github.com/hewal-dev/FarmSense]github.com/hewal-dev/FarmSense[/url]
