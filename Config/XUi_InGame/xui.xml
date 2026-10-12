@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FarmSense – registriert das HUD-Fenster in einer eigenen Fenstergruppe,
+  damit die Mod sie zur Laufzeit oeffnen/schliessen kann (wie Vanilla 'focusedBlockHealth').
+-->
+<configs>
+	<append xpath="/xui">
+		<window_group name="farmSenseHud" actionset="false">
+			<window name="farmSenseHud"/>
+		</window_group>
+	</append>
+</configs>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FarmSense – Aktivierungs-Reichweite für Kulturen.
+  Vanilla-Kulturen setzen kein "ActivationDistance"; dann gilt die Sammel-Reichweite
+  (Constants.cCollectItemDistance, ca. 2,5 m) – sehr knapp für das Ernten per E.
+  Bäume haben dagegen ActivationDistance=12. Hier auf 5 m angehoben (gilt für alle Blöcke,
+  die von den beiden Master-Blöcken erben: Vanilla- und FarmSense-Wildpflanzen).
+  Entfernen/diesen Wert ändern, wenn das Ernten wieder nur direkt an der Pflanze klappen soll.
+-->
+<configs>
+	<append xpath="/blocks/block[@name='cropsGrowingMaster']">
+		<property name="ActivationDistance" value="5"/>
+	</append>
+	<append xpath="/blocks/block[@name='cropsHarvestableMaster']">
+		<property name="ActivationDistance" value="5"/>
+	</append>
+</configs>

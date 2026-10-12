@@ -1,0 +1,29 @@
+# --- Build-Artefakte ---
+*.dll
+*.pdb
+*.mdb
+*.exe
+bin/
+obj/
+
+# Kompilierte Mod-Ausgabe (jederzeit aus dem Quellcode neu baubar)
+dist/
+
+# Release-Archive: gehören als GitHub-Release-Asset, nicht ins Repo
+releases/
+archives/
+*.zip
+
+# Nexus-/Marketing-Grafiken (Promo-Material, kein Quellcode)
+media/
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.vs/
+.idea/
+
+# Python (Nexus-Media-Werkzeug)
+__pycache__/
+*.pyc

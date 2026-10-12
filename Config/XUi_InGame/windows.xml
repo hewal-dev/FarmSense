@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FarmSense – HUD-Feld, zentriert direkt unter dem Pflanzennamen in der Bildschirmmitte.
+  Position/Groesse/Farben sind hier frei anpassbar; der Inhalt kommt aus der Mod.
+
+  Bindings: {stage} {detail} {warning} {showwarning} {fill}
+  Zeile 1 = Wachstumsstufe in Kurzform ("2/3"), Zeile 2 = Werte (Prozent + Restzeit / "reif").
+  Der Pflanzenname steht absichtlich NICHT hier drin – er erscheint direkt darueber in der
+  Bildschirmmitte (Vanilla-Blockname bei wachsenden, Mod-Prompt bei reifen Pflanzen).
+  Wer den Namen trotzdem im Feld moechte: <Hud_ShowName>true</Hud_ShowName> in der Config.xml.
+
+  Anker-Rechnung: bei anchor="Center" ist pos-x der Abstand der LINKEN Fensterkante von der
+  Bildschirmmitte – fuer ein zentriertes Feld also -(Breite/2) = -215 bei 430 px Breite.
+  pos-y negativ = nach unten (Vanilla-Prompt: 0,55; Block-Health-Fenster: 0,-40).
+-->
+<configs>
+	<append xpath="/windows">
+		<window name="farmSenseHud" anchor="Center" pos="-215,-26" width="430" height="90"
+		        controller="FarmSenseHud, FarmSense" fade_window="false" cursor_area="false" actionset="false">
+			<sprite depth="1" name="background" sprite="menu_empty3px" type="sliced" color="0,0,0,130" fillcenter="true"/>
+			<sprite depth="2" name="barBG" pos="12,-54" width="406" height="12" sprite="menu_empty" type="sliced" color="0,0,0,220"/>
+			<sprite depth="3" name="bar" pos="14,-56" width="402" height="8" pivot="topleft" color="120,220,120,255"
+			        fill="{fill}" filldirection="horizontal" type="filled" fillspritepad="true"/>
+			<label depth="4" name="lblStage" pos="12,-4" width="406" height="22" font_size="20" justify="center"
+			       color="185,215,185,255" effect="outline" effect_distance="1,1" effect_color="0,0,0,150"
+			       text="{stage}"/>
+			<label depth="4" name="lblDetail" pos="12,-26" width="406" height="28" font_size="24" justify="center"
+			       effect="outline" effect_distance="1,1" effect_color="0,0,0,150" text="{detail}"/>
+			<label depth="4" name="lblWarning" pos="12,-68" width="406" height="22" font_size="19" justify="center"
+			       color="255,180,60,255" text="{warning}" visible="{showwarning}"/>
+		</window>
+	</append>
+</configs>

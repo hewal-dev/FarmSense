@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FarmSense – Einstellungen
+  Diese Datei liegt neben der FarmSense.dll im Mod-Ordner und wird beim Start gelesen.
+  Alle Werte sind optional; fehlt ein Eintrag, gilt der hier gezeigte Standard.
+-->
+<FarmSense>
+	<!-- Mehr Logausgaben (nur zur Fehlersuche). Fuer den Diagnose-Durchlauf: true -->
+	<LogDebug>false</LogDebug>
+
+	<!-- ===== Ernten mit E ===== -->
+	<HarvestByE_Enabled>true</HarvestByE_Enabled>
+	<!-- Zerstoerungs-Sound des Pflanzenblocks beim Ernten abspielen (wie beim Schlagen) -->
+	<Harvest_PlaySound>true</Harvest_PlaySound>
+	<!-- Vanilla-Sammel-Sound + Sammel-Popup beim Einlagern der Ernte -->
+	<Harvest_PlayCollectSound>true</Harvest_PlayCollectSound>
+	<!-- Nur fuer den Ausweich-Pfad (falls beim Ernten kein gehaltenes Item mit Item-Action-Daten
+	     verfuegbar ist): Bonus-Eintraege (bonusCropHarvest, farmerBonusHarvest, farmerBonusSeed)
+	     ueberspringen. Im Normalfall wertet die Mod die Drop-Tabelle ueber den Spiel-Pfad aus
+	     (GameUtils.HarvestOnAttack) und trifft damit exakt Vanilla - inklusive Perk "Farmer" und
+	     der Werkzeug-Tier-Skalierung. -->
+	<Harvest_IgnoreBonusTags>true</Harvest_IgnoreBonusTags>
+	<!-- Erntemenge als Faktor auf die Vanilla-Ernte. 1.0 = exakt Vanilla (nicht aendern, wenn du die
+	     Originalwerte willst). Beispiel fuer bewusst reduzierte Ernte: 0.5 = halbe Menge. -->
+	<Harvest_YieldMultiplier>1.0</Harvest_YieldMultiplier>
+	<!-- Zusatz-Info im Vanilla-Prompt anzeigen (zusaetzlich/alternativ zum eigenen Feld).
+	     Wichtig: liefert auch den Hinweis "Druecke E zum Ernten" – ohne diesen Text zeigt der
+	     Vanilla-Prompt bei Pflanzen gar nichts mehr, sobald die Mod das Aktivierungskommando setzt.
+	     Deshalb im Release AN lassen. -->
+	<Hud_UseVanillaPrompt>true</Hud_UseVanillaPrompt>
+
+	<!-- ===== Anzeige (HUD) ===== -->
+	<!-- window = eigenes kleines Feld am Bildschirmrand, own = nur eigenes Feld, prompt = nur Vanilla-Prompt, off = aus -->
+	<Hud_Mode>window</Hud_Mode>
+	<Hud_ShowTrees>true</Hud_ShowTrees>
+	<Hud_ShowWarnings>true</Hud_ShowWarnings>
+	<!-- Wachstumsstufe kurz in der Kopfzeile des Feldes, z. B. "2/3" -->
+	<Hud_ShowStage>true</Hud_ShowStage>
+	<!-- Pflanzenname zusaetzlich im Feld anzeigen. Standard aus, weil der Name schon
+	     direkt darueber in der Bildschirmmitte steht (Vanilla-Blockname bei wachsenden,
+	     Prompt-Text bei reifen Pflanzen). -->
+	<Hud_ShowName>false</Hud_ShowName>
+	<!-- Aktualisierungsintervall der Anzeige in Sekunden. 0 = jeden Frame, damit die Anzeige
+	     genauso schnell erscheint wie die Vanilla-Namenszeile. -->
+	<Hud_UpdateInterval>0</Hud_UpdateInterval>
+	<!-- Nachlauf beim Ausblenden in Sekunden. 0 = sofort verschwinden, sobald man nicht mehr
+	     auf eine Pflanze zielt (wie die Vanilla-Anzeige). Ein kleiner Wert (z. B. 0.1) verhindert
+	     Flackern, falls das Ziel in einzelnen Frames kurz ungueltig ist. -->
+	<Hud_HideDelay>0</Hud_HideDelay>
+
+	<!-- ===== Wilde Kulturen wachsen nach (bestehende Welten) ===== -->
+	<WildGrowth_Enabled>true</WildGrowth_Enabled>
+	<!-- Pruef-Intervall in Sekunden (Server/Host) -->
+	<WildGrowth_IntervalSeconds>120</WildGrowth_IntervalSeconds>
+	<!-- Radius um jeden Spieler, in dem neue Pflanzen entstehen koennen -->
+	<WildGrowth_Radius>40</WildGrowth_Radius>
+	<!-- Versuche pro Intervall und Spieler -->
+	<WildGrowth_AttemptsPerInterval>12</WildGrowth_AttemptsPerInterval>
+	<!-- Wahrscheinlichkeit, dass ein gueltiger Platz bepflanzt wird -->
+	<WildGrowth_ChancePerAttempt>0.25</WildGrowth_ChancePerAttempt>
+	<!-- Obergrenze neuer Pflanzen pro Chunk (16x16 Bloecke) seit Serverstart -->
+	<WildGrowth_MaxPerChunk>2</WildGrowth_MaxPerChunk>
+	<!-- Mindestlichtwert am Standort -->
+	<WildGrowth_MinLight>11</WildGrowth_MinLight>
+	<!-- Nur diese Biome (Komma-getrennt) -->
+	<WildGrowth_Biomes>pine_forest</WildGrowth_Biomes>
+	<!-- Diese Wildpflanzen-Blöcke werden gesetzt (Komma-getrennt) -->
+	<WildGrowth_Blocks>plantedCorn3Harvest,plantedPotato3Harvest,plantedBlueberry3Harvest,plantedPumpkin3Harvest</WildGrowth_Blocks>
+</FarmSense>

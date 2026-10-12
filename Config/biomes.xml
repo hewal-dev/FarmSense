@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FarmSense – wilde Kulturen als Biome-Dekoration im Kiefernwald.
+  Wirkt nur bei NEU erzeugten Welten. Fuer bereits erkundete Gebiete in bestehenden Welten
+  uebernimmt das Nachwachsen-System der Mod (WildGrowthSystem, siehe Config.xml).
+  Vorlage: Vanilla platziert im Kiefernwald bereits plantedGoldenrod3Harvest/plantedCotton3Harvest/
+  plantedChrysanthemum3Harvest/plantedSnowberry3Harvest mit genau diesem Decorations-Mechanismus.
+-->
+<configs>
+	<append xpath="/worldgeneration/biomes/biome[@name='pine_forest']/subbiome[1]/decorations">
+		<decoration type="block" blockname="plantedCorn3Harvest"      prob=".004" rotatemax="7"/>
+		<decoration type="block" blockname="plantedPotato3Harvest"    prob=".004" rotatemax="7"/>
+		<decoration type="block" blockname="plantedBlueberry3Harvest" prob=".004" rotatemax="7"/>
+		<decoration type="block" blockname="plantedPumpkin3Harvest"   prob=".004" rotatemax="7"/>
+	</append>
+
+	<!-- Zweites Kiefernwald-Subbiome (Baeume/Straeucher, dichter bewachsen) – geringere Wahrscheinlichkeit -->
+	<append xpath="/worldgeneration/biomes/biome[@name='pine_forest']/subbiome[2]/decorations">
+		<decoration type="block" blockname="plantedCorn3Harvest"      prob=".002" rotatemax="7"/>
+		<decoration type="block" blockname="plantedPotato3Harvest"    prob=".002" rotatemax="7"/>
+		<decoration type="block" blockname="plantedBlueberry3Harvest" prob=".002" rotatemax="7"/>
+		<decoration type="block" blockname="plantedPumpkin3Harvest"   prob=".002" rotatemax="7"/>
+	</append>
+</configs>
