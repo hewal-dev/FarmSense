@@ -938,6 +938,32 @@ unten": kein Flackern, und die Anzeige bleibt beim Zielwechsel an derselben Stel
 dev = live (`083dedd2…`), DLL unverändert `f0c5635e…` (reine XML-Änderung, kein neuer Build nötig).
 **Spiel-Neustart nötig** (XUi-XML wird beim Start gepatcht); Sichtprüfung durch Hewal offen.
 
+## 4ad. Release 1.0.2 auf GitHub und Nexus (2026-10-13, ~20:52 Uhr / 18:52 UTC)
+
+Version **1.0.2** bündelt die drei Änderungen aus §4aa–§4ac (Bäume nicht mehr per E, Baumname im Feld,
+Feld unter der HP-Anzeige) plus den bereits in 1.0.1 veröffentlichten Prozent-Fix.
+
+* **Version 1.0.2** überall (`ModInfo.xml`, `src/FarmSenseMain.cs`), im Binary nachgewiesen
+  (`strings -el` → `[FarmSense] Version 1.0.2 wird geladen ...`).
+* **DLL SHA-256 `c6f8e84685fac1048f2f89a0320118f9123c991526262c9fec8a48ee9e5fb868`** — identisch in
+  `bin/`, `dist/FarmSense/`, Release-ZIP und Livetest (Hewal testet die veröffentlichte Fassung).
+* **Release-ZIP:** `releases/FarmSense-Crop-Info-and-Harvest-with-E-1.0.2.zip`
+  (8 Laufzeitdateien, **24.628 Bytes**, SHA-256 `442c81b17524a9226f3cc254b161693da88191961f0c991f6acabed2c702058f`),
+  `validate_release_zip.py`: **PASS**.
+* **GitHub:** Commit `1475260` auf `main`, Release **v1.0.2** (Latest) mit dem ZIP als Asset
+  (24.628 Bytes, `uploaded`), Tag `v1.0.2` → `1475260…` = `main`-HEAD; Notes-Datei außerhalb des Repos.
+* **Nexus:** Zeilenknopf **„Update"** an der 1.0.1-Zeile → Formular „Update existing file" → ZIP als
+  neue Version, Anzeigename `FarmSense Crop Info And Harvest With E 1.0.2`, Versionsfeld vorbelegt
+  **1.0.2**, Häkchen „Update mod version to match this file's version" **an**, im Feld
+  **„Add changelog"** (`#file-changelog-text`) ein englisches Stichpunkt-Changelog (4 Punkte, 410 Zeichen),
+  dann **„Save file"**. Mod-Version steht jetzt auf 1.0.2; 1.0.1 und 1.0.0 bleiben unter „Old files".
+* **Öffentlich anonym gegengeprüft** (Firecrawl ohne Cookies, `maxAge: 0`): Kopfzeile **Version 1.0.2**,
+  Main file `… 1.0.2` (24 KB) **mit Changelog-Link** (`ModChangeLogPopUp … version=1.0.2`),
+  alte Dateien 1.0.1/1.0.0 weiter gelistet. Hinweis von Nexus: „Virus scanning is in progress" —
+  normal, der Download wird nach dem Scan automatisch freigeschaltet.
+* **Changelog-Text an der Datei (englisch):** Bäume nicht mehr per E erntbar, Baumname im Feld,
+  Feld unter der HP-Anzeige, Prozentwert beschreibt das Gesamtwachstum.
+
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 
 1. Spiel starten (EAC aus), Client-Log prüfen: `~/.local/share/7DaysToDie/logs/output_client__*.txt`
