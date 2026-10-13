@@ -1,6 +1,7 @@
 # FarmSense – Arbeitsprotokoll (Fortsetzung durch jede Session)
 
-**Stand:** 2026-10-12 · Version **0.1.0** (Fix 2) · Status: **erst gebaut/geprüft, erster Livetest fehlgeschlagen, zwei Ursachen behoben und erneut synchronisiert – zweiter In-Game-Test offen**
+**Stand:** 2026-10-12 · Version **1.0.0** (Nexus/GitHub, veröffentlicht) · Status: **im Livetest bestätigt** (Wachstumsfeld, E-Ernte, Wildwuchs, Vanilla-Erntemengen)
+**Neuester Stand (2026-10-13):** **Prozent-Fix §4x** (Prozent gegen das Gesamtwachstum statt gegen die Restkette) gebaut, geprüft und synchronisiert — DLL `de901eec…`; In-Game-Gegenprobe und Release 1.0.1 offen.
 **Arbeitsordner:** `/home/hewal/Hermes/7d2d-v3-mods/FarmSense/` · **Livetest:** `/home/hewal/7 Days/0 einzelne mods/FarmSense/`
 **Spielversion (Belege):** V 3.3.0 (b18), Linux/Mono
 
@@ -742,6 +743,90 @@ Nach dem etablierten EVZ-Workflow (Skill `evz-nexus-mod-publishing`):
   (das lokale Brave-Profil war durch einen laufenden Browser gesperrt) — Abschnittsreihenfolge,
   Credits-/Permissions-Text und Bildsprache sind von dort übernommen.
 * Für Codex musste im Projekt ein Git-Repository initialisiert werden (`git init`).
+
+## 4x. Fortschritts-Prozent war nicht aussagekräftig — jetzt gegen das Gesamtwachstum (2026-10-13)
+
+**Hewals Befund (2 Screenshots, gleicher Spielstand):** derselbe Pilz zeigt in zwei Wachstumsstadien fast
+identische Prozentwerte:
+
+| Bild | Block (Vanilla-Name) | HUD |
+|---|---|---|
+| B | `plantedMushroom1` = „Pilzsporen (Samen)" | Stufe **1/3**, **4 % – reif in 2 h 0 min** |
+| A | `plantedMushroom2` = „Pilze (Anbau)" | Stufe **2/3**, **9 % – reif in 58 min** |
+
+**Ursache (im Code belegt, `src/CropRegistry.cs::Get`):** Der Prozentwert wurde gegen die **Restkette**
+gerechnet (`1 − SecondsLeft / chain.SecondsFrom(stage)`), die Restzeit daneben ist aber die
+**Gesamt**-Restzeit. Der Nenner ist deshalb von der Stufe abhängig:
+
+| Stufe | Nenner `SecondsFrom(stage)` | Bedeutung |
+|---|---|---|
+| 1/3 | 63 + 63 + 0 = **126 min** | zufällig = das ganze Wachstum → Prozent stimmt |
+| 2/3 | 63 + 0 = **63 min** | nur die Restkette → Prozent startet wieder bei 0 % |
+
+Folge: Beim Stufenwechsel springt der Wert von ~50 % **auf 0 % zurück**, und ein schon weit
+gewachsenes Feld zeigt weiter kleine Zahlen — genau das, was Hewal im Bild sieht.
+Die Restzeit war dabei die ganze Zeit korrekt (2 h 0 min bzw. 58 min).
+
+**Nachrechnung gegen die echten Spieldaten** (Kette aus `Data/Config/blocks.xml`,
+`cropsGrowingMaster` GrowthRate = **63 min/Stufe**, `GetTickRate()/20`): bei 57,5 min Rest in der
+aktuellen Stufe — das ist der Wert hinter beiden Screenshots — liefert die alte Formel **exakt 4 % und
+9 %**, also die beobachteten Zahlen:
+
+| Fall | alte Formel | neue Formel |
+|---|---|---|
+| Stufe 1/3, 57,5 min Rest in der Stufe | 4 % | 4 % (unverändert) |
+| Stufe 2/3, 57,5 min Rest in der Stufe | 9 % | **54 %** |
+| Übergang Stufe 1 → 2 (Rest 0 → 63 min) | 50 % → **0 %** | 50 % → 50 % |
+
+**Fix (`src/CropRegistry.cs`):** Neues Feld `PlantInfo.ChainTotalSeconds = chain.SecondsFrom(0)` (ganzes
+Wachstum ab der Saat) und Prozent = `1 − SecondsLeft / ChainTotalSeconds`. `SecondsTotal` (Restkette)
+bleibt unverändert als Rückfallwert für den Fall „kein Ticker-Eintrag" (`RemainingInStage < 0`, dort
+weiterhin 0 % + Warnhinweis). Stufe 1 zeigt also denselben Wert wie bisher, ab Stufe 2 ist der Wert
+monoton und passt zur Restzeit; einzige Annahme ist, dass die vorherigen Stufen ihre Nenn-Dauer
+gebraucht haben (dieselbe Annahme steckt schon in der Gesamt-Restzeit).
+
+**Prüfstand:** Build fehlerfrei · DLL SHA-256 `de901eecfc06f804f6aa841b49d50eea72df46a83315ae40280584efcdf3a1dc`
+· Harmony-Probe **6/6** („ALLE PATCHES AUFLOESBAR UND ANGEWENDET"; die Mono-Meldung zu
+`UnityEngine.CoreModule` am Ende ist ein Umgebungsartefakt des Probes, kein Patch-Fehler) ·
+neues Feld in Build **und** Ziel-DLL nachgewiesen (`monodis --fields` → `float64 ChainTotalSeconds`) ·
+Sync (dry-run + rsync, keine Löschungen) mit identischem Hash · Doku nachgezogen
+(`../FarmSense.md` Funktionsbeschreibung + offener Punkt, `README.md` Feature-Zeile).
+**In-Game noch nicht gegengeprüft** — erwartet: `2/3` mit ~54 % (statt 9 %) und 58 min Restzeit,
+Stufe 1/3 unverändert 4 %.
+
+**Nicht geändert:** Restzeit, Ernte, Stufenanzeige, Wildwuchs.
+
+## 4y. Release 1.0.1 auf Nexus veröffentlicht (2026-10-13, 18:23 Uhr)
+
+**Auslöser:** Hewals Freigabe nach der In-Game-Sichtprüfung des Prozent-Fixes (§4x).
+
+* **Version 1.0.1** überall gesetzt (`ModInfo.xml`, `src/FarmSenseMain.cs`) und im Binary nachgewiesen
+  (`strings -el` → `[FarmSense] Version 1.0.1 wird geladen ...`).
+* **DLL SHA-256 `31cde140ecc02507de5c90154fb7ec4f8c4a64633b62e6d53081f05f3ec6ab31`** — identisch in
+  Build, `dist/FarmSense/`, **Release-ZIP** und Livetest (`~/7 Days/0 einzelne mods/FarmSense/`):
+  Hewal testet in-game byte-genau die veröffentlichte Fassung.
+* **Release-ZIP:** `releases/FarmSense-Crop-Info-and-Harvest-with-E-1.0.1.zip` (8 Laufzeitdateien,
+  51.112 Bytes, SHA-256 `81bc26b7c0009a4a8150c154ba450dcc90c34f8dafcd47925c129ce2ca2a1a42`),
+  `validate_release_zip.py`: **PASS**; die 1.0.0-ZIP bleibt als Archiv daneben erhalten.
+* **Nexus (bestehende Mod 13118, kein neuer Eintrag):** Files-Tab → Zeilenknopf **„Update"** →
+  Formular „Update existing file" (Ziel `… 1.0.0`) → Datei als neue Version hochgeladen, Anzeigename auf
+  `FarmSense Crop Info And Harvest With E 1.0.1` gesetzt, **„Update mod version to match this file's
+  version"** aktiviert, **„Save file"** geklickt. Die Mod-Version steht damit auf 1.0.1, die alte 1.0.0
+  bleibt unter „Old files" weiter verfügbar. Die Mod-Beschreibung blieb unverändert (Hewals Vorgabe).
+* **Öffentlich anonym gegengeprüft** (Firecrawl ohne Cookies, `maxAge: 0`): Kopfzeile „Version 1.0.1",
+  „Last updated 13 October 2026, 6:23PM", Main file `FarmSense Crop Info And Harvest With E 1.0.1`
+  (23 KB, Version 1.0.1), Old file 1.0.0 gelistet. Nexus-Hinweis beim neuen File:
+  _„This file is not yet available for download. Virus scanning is in progress."_ — normal, der
+  Download wird nach dem Scan automatisch freigeschaltet.
+* **Formular-Pitfall (für den Skill):** Der Zeilenknopf „Update" öffnet einen **nativen Dateidialog**, der
+  in einem Headless-Browser nichts bewirkt (kein Dialog, kein DOM-Effekt). Das Formular erscheint erst,
+  wenn die ZIP direkt in den versteckten `input[type=file]` **ohne `accept`-Attribut** gesetzt wird
+  (`DOM.setFileInputFiles`). Der Input mit `accept=".rar,.zip,…"` gehört zur Box „Add file" und würde
+  eine **zweite** Dateizeile anlegen. Anzeigename/Versionsfelder (`#display-name`, `#file-version`) waren
+  danach bereits sinnvoll vorbelegt.
+* **Offen:** GitHub-Release/Commit v1.0.1 (nicht beauftragt) und der optionale Rückfluss des lokal
+  vorbereiteten Changelogs (`NEXUS_DESCRIPTION_EN.md` enthält den Abschnitt „Changelog" bereits,
+  er ist **noch nicht** auf Nexus).
 
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 

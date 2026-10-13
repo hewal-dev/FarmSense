@@ -20,7 +20,7 @@ FarmSense - Crop Info and Harvest with E
 
 [list]
 [*]Shows the growth stage, for example [b]2/3[/b]
-[*]Shows the growth percentage and the time remaining until the plant is ripe
+[*]Shows the growth percentage of the whole growth, from seed to ripe, and the time remaining until the plant is ripe
 [*]Compact progress bar with a green fill while the plant grows
 [*]Works with an empty hand and with any tool or weapon in your hand
 [*]Appears immediately, as fast as the vanilla name line, and disappears again as soon as you look away
@@ -130,6 +130,23 @@ The resulting path should look similar to this:
 FarmSense works with the vanilla farming system. It reads the crop blocks and their drop tables and adds one interaction command to plants.
 
 Conflicts are possible with mods that rewrite the crop blocks, replace the plant drop tables, or heavily modify the interaction prompt and the block HUD. Overhauls with their own farming system are not supported. Universal compatibility with every UI or farming mod is not guaranteed.
+
+[line]
+
+[heading][color=#e8892a]Changelog[/color][/heading]
+
+[b]1.0.1[/b]
+
+[list]
+[*]The growth percentage now describes the whole growth from seed to ripe and no longer restarts when a plant moves on to its next growth stage. A plant in its second stage now shows its real progress, for example [b]54 % - ready in 58 min[/b] instead of a small value close to the one it showed in the first stage.
+[*]The percentage and the remaining time now always refer to the same thing, so the two values match each other.
+[/list]
+
+[b]1.0.0[/b]
+
+[list]
+[*]First public release: crop info while aiming, harvest with [b]E[/b], and wild crops in the pine forest.
+[/list]
 
 [line]
 

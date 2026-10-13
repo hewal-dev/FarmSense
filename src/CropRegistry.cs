@@ -45,7 +45,10 @@ namespace FarmSense
         public bool IsWild;
         public float Percent;
         public double SecondsLeft;
+        /// <summary>Restzeit der Kette ab der aktuellen Stufe (Summe). Fallback fuer "kein Ticker-Eintrag".</summary>
         public double SecondsTotal;
+        /// <summary>Gesamtdauer der Kette ab der ersten Stufe (Samen) – Bezugsgroesse fuer den Prozentwert.</summary>
+        public double ChainTotalSeconds;
         public int Stage;
         public int StageCount;
         public string BlockName = "";
@@ -298,6 +301,8 @@ namespace FarmSense
             info.IsReady = (stage == chain.Stages.Count - 1);
             info.IsDead = info.BlockName.IndexOf("Dead", StringComparison.OrdinalIgnoreCase) >= 0;
             info.SecondsTotal = chain.SecondsFrom(stage);
+            // Bezugsgroesse fuer Prozent: das GANZE Wachstum ab der ersten Stufe (Samen).
+            info.ChainTotalSeconds = chain.SecondsFrom(0);
 
             if (info.IsDead)
             {
@@ -325,9 +330,16 @@ namespace FarmSense
             {
                 info.Growing = true;
                 info.SecondsLeft = rest + chain.SecondsAfter(stage);
-                if (info.SecondsTotal > 0.5)
+                // Prozent = Fortschritt des GANZEN Wachstums (ab der Samen-/ersten Stufe), passend zur
+                // angezeigten Gesamt-Restzeit "reif in ...".
+                // Vorher wurde gegen SecondsFrom(stage) (nur die Restkette) gerechnet – dadurch sprang
+                // der Wert bei jedem Stufenwechsel auf ~0 % zurueck (Befund 2026-10-13: Pilz Stufe 1/3
+                // 4 %, Stufe 2/3 9 %, obwohl dieselbe Pflanze dort schon ueber die Haelfte war).
+                double total = info.ChainTotalSeconds;
+                if (total <= 0.5) total = info.SecondsTotal;   // Notnagel: Kette ohne Zeiten
+                if (total > 0.5)
                 {
-                    double p = 1.0 - info.SecondsLeft / info.SecondsTotal;
+                    double p = 1.0 - info.SecondsLeft / total;
                     if (p < 0.0) p = 0.0;
                     if (p > 1.0) p = 1.0;
                     info.Percent = (float)p;

@@ -4,7 +4,7 @@
 	<DisplayName value="FarmSense"/>
 	<Description value="Pflanzen-Info beim Anvisieren (Wachstum in Prozent, Restzeit, Warnhinweise), Ernten mit E, wilde Kulturen im Kiefernwald inkl. Nachwachsen."/>
 	<Author value="Eltern vs Zombies"/>
-	<Version value="1.0.0"/>
+	<Version value="1.0.1"/>
 	<Website value="https://www.youtube.com/@ElternVSZombies"/>
 	<SkipWithAntiCheat value="true"/>
 </xml>

@@ -14,7 +14,7 @@ An independent development by **Eltern vs Zombies**, released under the **MIT Li
 
 | Feature | Description |
 |---------|-------------|
-| 📈 **Growth info** | Stage (for example `2/3`), growth percentage and the time remaining until the plant is ripe |
+| 📈 **Growth info** | Stage (for example `2/3`), growth percentage of the whole growth from seed to ripe, and the time remaining until the plant is ripe |
 | ⏳ **Live progress bar** | Green fill while the plant grows, so the state is readable at a glance |
 | 🖐 **Works with empty hands** | The info appears while aiming, with or without an item in your hand |
 | ⚡ **Instant** | Appears as fast as the vanilla name line and disappears again when you look away |
