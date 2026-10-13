@@ -824,9 +824,25 @@ Stufe 1/3 unverändert 4 %.
   (`DOM.setFileInputFiles`). Der Input mit `accept=".rar,.zip,…"` gehört zur Box „Add file" und würde
   eine **zweite** Dateizeile anlegen. Anzeigename/Versionsfelder (`#display-name`, `#file-version`) waren
   danach bereits sinnvoll vorbelegt.
-* **Offen:** GitHub-Release/Commit v1.0.1 (nicht beauftragt) und der optionale Rückfluss des lokal
+* **Offen:** GitHub-Release/Commit v1.0.1 (siehe §4z — erledigt) und der optionale Rückfluss des lokal
   vorbereiteten Changelogs (`NEXUS_DESCRIPTION_EN.md` enthält den Abschnitt „Changelog" bereits,
   er ist **noch nicht** auf Nexus).
+
+## 4z. Quellcode und Release auf GitHub nachgezogen (2026-10-13, 20:32 Uhr)
+
+Nach dem Muster der Erstveröffentlichung (Skill `mod-source-publication`, „Publishing a later version"):
+
+* **Commit `3c9aed0`** auf `main` (`FarmSense 1.0.1 - growth percentage now covers the whole growth`)
+  mit Ursache, Nachrechnung und Prüfstand im Commit-Text; nur Quell-/Doku-Dateien im Index
+  (Leak-Check gegen `.dll`/`.zip`/`dist/`/`releases/`/`media/`: OK, `.gitignore` deckt das ab).
+* **GitHub-Release `v1.0.1`** (Titel `FarmSense 1.0.1`, Notes-Datei außerhalb des Repos) mit
+  `FarmSense-Crop-Info-and-Harvest-with-E-1.0.1.zip` als Asset: **23.796 Bytes, State `uploaded`**,
+  identisch zur lokalen Datei (`stat` 23.796 Bytes, SHA-256 `81bc26b7…`).
+  Notes enthalten u. a. den Update-Hinweis (Ordner ersetzen, keine Datei entfällt, kein neuer Spielstand).
+* **Gegengeprüft (nicht nur gepusht):** `gh release list` zeigt `v1.0.1` als **Latest**,
+  Tag `v1.0.1` → `3c9aed0c8ce9ba7b2bbef368630e08b3b86cf66c` = `main`-HEAD zum Release-Zeitpunkt,
+  Asset-Größe lokal = remote, Repo-Baum enthält nur Quellcode/Doku (keine DLL, kein ZIP).
+* Dieser Doku-Nachtrag kommt bewusst **nach** dem Release; der Tag zeigt weiterhin auf `3c9aed0`.
 
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 
