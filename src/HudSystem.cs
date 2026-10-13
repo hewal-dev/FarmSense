@@ -103,7 +103,7 @@ namespace FarmSense
                 + " waechst=" + info.Growing + " reif=" + info.IsReady + " pct=" + Mathf.RoundToInt(info.Percent * 100f)
                 + " rest=" + Mathf.RoundToInt((float)info.SecondsLeft) + "s warn=" + info.WarnKey);
 
-            if (!cfg.Hud_ShowTrees && info.BlockName.StartsWith("tree", StringComparison.OrdinalIgnoreCase)) return false;
+            if (!cfg.Hud_ShowTrees && info.IsTree) return false;
 
             fill = info.Percent;
 
@@ -115,8 +115,10 @@ namespace FarmSense
             if (cfg.Hud_ShowStage && info.StageCount > 1)
                 stageShort = string.Format(Localization.Get("farmSenseStageShort"), info.Stage, info.StageCount);
 
-            if (cfg.Hud_ShowName)
+            if (cfg.Hud_ShowName || info.IsTree)
             {
+                // Baeume zeigen ihren Namen immer: in der Vanilla-Zeile steht bei ihnen keiner
+                // (kein Aktivierungskommando), und die Stufe allein sagt nicht, welcher Baum es ist.
                 stage = info.IsWild ? string.Format(Localization.Get("farmSenseWild"), info.DisplayName) : info.DisplayName;
                 detail = stageShort;
             }
@@ -131,7 +133,10 @@ namespace FarmSense
 
             if (info.IsReady)
             {
-                AddDetail(ref detail, Localization.Get("farmSenseReadyShort") + " \u00b7 " + Localization.Get("farmSensePressHarvestText"));
+                // Baeume sind von der E-Ernte ausgenommen (Vanilla faellt sie per Schlagen),
+                // also dort keinen "Ernten mit E"-Hinweis anzeigen.
+                if (info.IsTree) AddDetail(ref detail, Localization.Get("farmSenseReadyShort"));
+                else AddDetail(ref detail, Localization.Get("farmSenseReadyShort") + " \u00b7 " + Localization.Get("farmSensePressHarvestText"));
                 fill = 1f;
                 return true;
             }
@@ -212,7 +217,8 @@ namespace FarmSense
             else if (!string.IsNullOrEmpty(info.WarnKey)) body = string.Format(Localization.Get(info.WarnKey), info.DisplayName);
             else body = string.Format(Localization.Get("farmSenseWarnUnknown"), info.DisplayName);
 
-            if (info.IsReady) __result = body + " \u00b7 " + Localization.Get("farmSensePressHarvest");
+            // Baeume sind von der E-Ernte ausgenommen: Info anzeigen, aber keinen Tasten-Hinweis.
+            if (info.IsReady && !info.IsTree) __result = body + " \u00b7 " + Localization.Get("farmSensePressHarvest");
             else __result = body;
 
             HudSystem.Diag("Prompt-Text: " + __result);

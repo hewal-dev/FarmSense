@@ -844,6 +844,100 @@ Nach dem Muster der Erstveröffentlichung (Skill `mod-source-publication`, „Pu
   Asset-Größe lokal = remote, Repo-Baum enthält nur Quellcode/Doku (keine DLL, kein ZIP).
 * Dieser Doku-Nachtrag kommt bewusst **nach** dem Release; der Tag zeigt weiterhin auf `3c9aed0`.
 
+## 4aa. Bäume waren per E „erntbar" — jetzt ausgenommen (2026-10-13)
+
+**Hewals Befund:** Ein ausgewachsener Baum lässt sich mit **E** einsammeln. Er soll wie in Vanilla
+nur per Schlagen fallen. Vorgabe: **Version bleibt 1.0.1**.
+
+**Ursache (im Assembly belegt):** `BlockModelTree` — die Blockklasse **aller** Bäume — **erbt von
+`BlockPlantGrowing`**. Damit landen Baumketten im Pflanzenregister (`Block.list` → `b as
+BlockPlantGrowing`), und das einzige Ernte-Kriterium war „letzte Stufe der Kette":
+
+| Beleg | Ergebnis |
+|---|---|
+| `monodis --typedef Assembly-CSharp.dll` | `BlockModelTree (flags=0x100001, extends=0x4d8)` → `extends`/4 = TypeDef-Zeile **310 = BlockPlantGrowing** |
+| Mono-Reflection-Probe am installierten Spiel (V 3.3.0 b18) | `BlockModelTree: public=True abstract=False`, `erbt von: BlockPlantGrowing → BlockPlant → Block → Object`, `BlockModelTree ist BlockPlantGrowing: True`, `BlockPlantGrowing ist BlockModelTree: False` |
+| `blocks.xml` | **50 Blöcke** mit `Class=ModelTree` (treeBurntMaple01 … treeWinterPine28m), davon **14 im Mod-Register** |
+| Ketten-Endstufen (= bisher E-erntbar) | `treePlantedOak41m`, `treePlantedMountainPine41m`, `treePlantedWinterPine28m` |
+
+Folge: E an `treePlantedOak41m` vergab die Harvest-Tabelle des Baums (**150 Holz**, `Destroy` 2 Setzlinge)
+und ließ den ganzen Baum in einem Tastendruck verschwinden. Zwischenstufen waren nie betroffen (nur die
+Endstufe galt als „reif").
+
+**Fix (`src/CropRegistry.cs`, `src/HarvestLogic.cs`, `src/HudSystem.cs`):**
+
+1. **Erkennung über die Blockklasse, nicht über den Namen:** `IsTreeBlock(Block)` prüft
+   `b is BlockModelTree` (fängt alle Baumtypen, auch umbenannte aus Mods) und fällt konservativ auf den
+   Vanilla-Namenspräfix `tree…` zurück. `CropStage.IsTree` wird beim Registeraufbau je Stufe gesetzt.
+2. **Ein Kriterium an einer Stelle:** neues `CropRegistry.IsHarvestable(blockId)` = *Endstufe **und**
+   kein Baum*. `IsReadyBlock` bleibt für die Anzeige erhalten, `HarvestLogic.CanHarvest` nutzt jetzt
+   `IsHarvestable` (Diagnosezeile `… ist ein Baum - kein E-Kommando`).
+3. **Sicherheitsnetz für alle Aufrufer:** `HarvestNow` lehnt Nicht-Erntziele ab — damit ist auch der
+   **Multiplayer-Pfad** (`NetPackageFarmSenseHarvest` → Server) abgedeckt, nicht nur das E-Kommando am Client.
+4. **Anzeige bleibt, Hinweis fällt:** Bäume werden weiterhin angezeigt (`Hud_ShowTrees` steuert das jetzt
+   über `info.IsTree`), aber ohne „Ernten mit E" — sowohl im Mod-Feld als auch im Vanilla-Prompt.
+   Unverändert bleiben Restzeit, Prozentwert, Wachstumsstufen und der Wildwuchs.
+
+**Prüfstand:** Build fehlerfrei · DLL SHA-256 `e7d25858ac4d3a090689c543854f22eba8fb4355d66de78fd393d877fd9f4f2f`
+· Harmony-Probe **6/6** · Sync (dry-run + rsync) mit identischem Hash im Livetest · Version bleibt **1.0.1**
+(`ModInfo.xml`, `FarmSenseMain.cs`).
+
+**Bewusst nicht geändert (dokumentiert, weil gleiche Klasse von Blöcken):** Die Biome-Deko-Pilze
+(`mushroomBiome2/4`, `mushroomRadiated02/04`) und `plantedtreeGrassSeedRandomHelper` (Ziergras) bleiben
+per E erntbar — sie sind wilde Pflanzen im Sinne der Mod. Ebenfalls außen vor: die beiden Dev-/Helper-Blöcke
+`cropsHarvestableMaster` und `terrFertileGrassExample` (kommen in Welten nicht vor).
+
+**Offen:** In-Game-Gegenprobe durch Hewal (E an einem Baum → **kein** Radial/kein Ernten; E an einer reifen
+Kultur unverändert) und die Entscheidung, ob die bereits veröffentlichte **1.0.1** (Nexus/GitHub) durch
+diesen Build ersetzt wird.
+
+## 4ab. Bäume zeigen jetzt ihren Namen im Feld (2026-10-13)
+
+**Wunsch Hewal:** Bei Bäumen soll der Name angezeigt werden.
+
+**Ausgangslage:** Das Feld zeigt standardmäßig nur die Stufe (`Hud_ShowName=false`), weil der Pflanzenname
+bei Kulturen direkt darüber in der Vanilla-Zeile steht. Bei Bäumen fehlt diese Zeile (die Mod bietet dort
+seit §4aa kein Aktivierungskommando mehr) — im Feld stand also nur `5/5`.
+
+**Umsetzung (`src/CropRegistry.cs`, `src/HudSystem.cs`):**
+* `ChainFrom` setzt `DisplayName` für Baumketten jetzt aus der **Endstufe** der Kette, ohne Größenangabe:
+  `PrettyTreeName` macht aus „Baum – angepflanzte Eiche 41 m" → **„Baum – angepflanzte Eiche"**, aus
+  „Baum – angepflanzte Bergkiefer, 41 m" → „Baum – angepflanzte Bergkiefer" (Komma-Variante) und aus
+  „Tree Planted Oak 41m" → „Tree Planted Oak". Nur ein Endstück aus Ziffern + „m" (mit optionalem Trenner)
+  wird entfernt. Der Kettenname der Saat („Eichensamen"/„Oak Seed") wäre unbrauchbar; die Endstufe liefert
+  in **jeder** Stufe denselben, sprechenden Namen.
+* `HudSystem.BuildTexts`: `if (cfg.Hud_ShowName || info.IsTree)` — Bäume zeigen ihren Namen unabhängig
+  von `Hud_ShowName`. Die Stufe wandert dabei wie bei `Hud_ShowName=true` in die Wertezeile
+  (`4/5 · 62 % – reif in 1 h 3 min`, bei Reife `5/5 · reif`).
+* Gegenprobe der Namenslogik gegen die echten Lokalisierungstexte (DE + EN) aller drei gepflanzten
+  Baumarten: „Baum – angepflanzte Eiche 41 m" → „Baum – angepflanzte Eiche", „Baum – angepflanzte
+  Bergkiefer, 41 m" → „Baum – angepflanzte Bergkiefer", „Tree Planted Winter Pine 28m" →
+  „Tree Planted Winter Pine"; „Eichensamen"/„Oak Seed" bleiben unverändert.
+
+**Prüfstand:** Build fehlerfrei · DLL SHA-256 `f0c5635e7cace1b55331e385fe8226ff30a3fd3729766396eccebe6a787608b4`
+· Harmony-Probe 6/6 · Sync (dry-run + rsync) mit identischem Hash · Version bleibt **1.0.1**.
+**Offen:** In-Game-Sichtprüfung (erwartet z. B. `Baum – angepflanzte Eiche` / `4/5 · 62 % – reif in 1 h 3 min`).
+
+## 4ac. Feld lag über der Block-Health-Anzeige — jetzt darunter (2026-10-13)
+
+**Hewals Bild:** Beim Schlagen auf einen Baum lagen die HP-Zahlen (`43/300`) und der Mod-Text
+(„Baum – Wacholder") übereinander.
+
+**Ursache (aus den Vanilla-XUi-Werten gerechnet):** `focusedBlockHealth` steht auf
+`anchor="Center" pos="0,-40"` mit Höhe 50 (Sprite bei 0/-12, Textlabel bei -10, Schrift 30) → die
+HP-Anzeige reicht von 40 bis rund 90 px unter die Bildmitte. Das Mod-Feld begann bei `pos="-215,-26"`,
+sein Inhalt lief also von ~30 bis ~116 px unter der Mitte — mitten in der HP-Anzeige. Bisher fiel das
+kaum auf (im Feld stand nur „5/5"); mit dem Baumnamen (§4ab) wurde es offensichtlich. Bei Kulturen
+tritt es nur beim Schlagen auf, weil Vanilla die Leiste erst bei `damage > 0` einblendet.
+
+**Fix:** reine XML-Änderung (`Config/XUi_InGame/windows.xml`): `pos="-215,-26"` → **`pos="-215,-96"`**
+(ca. 6 px Abstand unter der HP-Anzeige). Bewusst feste Position statt „springt beim Schlagen nach
+unten": kein Flackern, und die Anzeige bleibt beim Zielwechsel an derselben Stelle.
+
+**Prüfstand:** Build + Sync; Gegenprüfung im **Ziel**: Zeile 25 `pos="-215,-96"`, Datei-Hash
+dev = live (`083dedd2…`), DLL unverändert `f0c5635e…` (reine XML-Änderung, kein neuer Build nötig).
+**Spiel-Neustart nötig** (XUi-XML wird beim Start gepatcht); Sichtprüfung durch Hewal offen.
+
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 
 1. Spiel starten (EAC aus), Client-Log prüfen: `~/.local/share/7DaysToDie/logs/output_client__*.txt`

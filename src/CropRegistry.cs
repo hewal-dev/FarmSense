@@ -11,6 +11,8 @@ namespace FarmSense
         public string Name = "";
         public double Seconds;      // Zeit bis zur naechsten Stufe (0 = Endstufe)
         public bool IsGrowing;      // diese Stufe waechst weiter
+        /// <summary>Baum (Blockklasse BlockModelTree bzw. Vanilla-Namenspraefix "tree") – nie per E erntbar.</summary>
+        public bool IsTree;
     }
 
     /// <summary>Wachstumskette einer Pflanze (Mais: Samen -> Anbau -> Ernte).</summary>
@@ -19,6 +21,8 @@ namespace FarmSense
         public List<CropStage> Stages = new List<CropStage>();
         public string DisplayName = "";
         public bool IsPlayerCrop = true;
+        /// <summary>Baumkette (Vanilla-Namenskonvention "tree…") – wird nie per E geerntet.</summary>
+        public bool IsTree;
 
         public double SecondsFrom(int stageIndex)
         {
@@ -43,6 +47,8 @@ namespace FarmSense
         public bool IsReady;
         public bool IsDead;
         public bool IsWild;
+        /// <summary>true = Baum (nicht per E erntbar, nur Anzeige).</summary>
+        public bool IsTree;
         public float Percent;
         public double SecondsLeft;
         /// <summary>Restzeit der Kette ab der aktuellen Stufe (Summe). Fallback fuer "kein Ticker-Eintrag".</summary>
@@ -134,12 +140,14 @@ namespace FarmSense
                 if (n.IndexOf("Harvest", StringComparison.OrdinalIgnoreCase) < 0) continue;
                 CropChain c = new CropChain();
                 c.IsPlayerCrop = n.EndsWith("HarvestPlayer", StringComparison.OrdinalIgnoreCase);
+                c.IsTree = IsTreeBlock(b);
                 c.DisplayName = WildDisplayName(b);
                 CropStage st = new CropStage();
                 st.BlockId = b.blockID;
                 st.Name = n;
                 st.Seconds = 0;
                 st.IsGrowing = false;
+                st.IsTree = c.IsTree;
                 c.Stages.Add(st);
                 Register(c);
                 singles++;
@@ -153,6 +161,7 @@ namespace FarmSense
         {
             CropChain c = new CropChain();
             c.IsPlayerCrop = true;
+            c.IsTree = IsTreeBlock(root);
 
             Block cur = root;
             HashSet<int> seen = new HashSet<int>();
@@ -163,6 +172,8 @@ namespace FarmSense
                 CropStage st = new CropStage();
                 st.BlockId = cur.blockID;
                 st.Name = cur.GetBlockName();
+                st.IsTree = IsTreeBlock(cur);
+                if (st.IsTree) c.IsTree = true;
 
                 BlockPlantGrowing pg = cur as BlockPlantGrowing;
                 st.IsGrowing = false;
@@ -175,14 +186,45 @@ namespace FarmSense
 
                 if (c.Stages.Count == 0) c.DisplayName = PrettyName(cur);
                 c.Stages.Add(st);
-
                 if (pg == null || pg.nextPlant.isair) break;
                 Block nb = pg.nextPlant.Block;
                 if (nb == null) break;
                 cur = nb;
             }
 
+            // Baeume: Anzeigename aus der Endstufe der Kette ohne Groessenangabe
+            // ("Baum – angepflanzte Eiche 41 m" -> "Baum – angepflanzte Eiche"), damit die Pflanze
+            // in jeder Stufe denselben, sprechenden Namen hat. Bei der Saat ("Eichensamen") waere
+            // der Kettenname sonst unbrauchbar.
+            if (c.IsTree && cur != null) c.DisplayName = PrettyTreeName(cur);
+
             return c;
+        }
+
+        /// <summary>
+        /// Baumname ohne Groessenangabe. Vanilla-Deutsch: "Baum – angepflanzte Eiche 41 m",
+        /// "Baum – angepflanzte Bergkiefer, 41 m"; Englisch: "Tree Planted Oak 41m".
+        /// Nur ein Endstueck aus Ziffern + "m" (mit optionalem Trenner davor) wird entfernt.
+        /// </summary>
+        static string PrettyTreeName(Block b)
+        {
+            string n = PrettyName(b);
+            if (string.IsNullOrEmpty(n)) return n;
+
+            int i = n.Length - 1;
+            while (i >= 0 && char.IsWhiteSpace(n[i])) i--;
+            if (i < 1 || (n[i] != 'm' && n[i] != 'M')) return n;
+
+            int j = i - 1;
+            while (j >= 0 && char.IsWhiteSpace(n[j])) j--;
+            int k = j;
+            while (k >= 0 && n[k] >= '0' && n[k] <= '9') k--;
+            if (k == j) return n;                           // keine Ziffer vor dem "m"
+
+            int cut = k;
+            while (cut >= 0 && (n[cut] == ' ' || n[cut] == ',')) cut--;
+            string trimmed = n.Substring(0, cut + 1).TrimEnd(' ', ',');
+            return trimmed.Length > 1 ? trimmed : n;
         }
 
         static void Register(CropChain c)
@@ -257,6 +299,27 @@ namespace FarmSense
             return text.Trim();
         }
 
+        /// <summary>
+        /// Baum-Erkennung, 1. Wahl: die Blockklasse. Alle Baeume des Spiels sind <c>BlockModelTree</c>
+        /// (Vanilla: 50 Bloecke, von treeBurntMaple01 ueber treeOakSml01 bis treeWinterPine28m,
+        /// einschliesslich der Wachstumsketten treePlantedOak1m…41m). <c>BlockModelTree</c> erbt von
+        /// <c>BlockPlantGrowing</c> – genau deshalb landen Baeume ueberhaupt im Pflanzenregister und
+        /// waren vorher per E "erntbar".
+        /// 2. Wahl: der Vanilla-Namenspraefix "tree…" (faengt Bloecke ab, die ihre Klasse ueberschreiben).
+        /// </summary>
+        public static bool IsTreeBlock(Block b)
+        {
+            if (b == null) return false;
+            if (b is BlockModelTree) return true;
+            return IsTreeName(b.GetBlockName());
+        }
+
+        /// <summary>Vanilla-Namenskonvention fuer Baeume: "treeMaster", "treePlantedOak1m", "treeOakSml01" …</summary>
+        public static bool IsTreeName(string name)
+        {
+            return !string.IsNullOrEmpty(name) && name.StartsWith("tree", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool TryGetInfo(int blockId, out CropChain chain, out int stage)
         {
             chain = null;
@@ -273,6 +336,29 @@ namespace FarmSense
             CropChain c;
             int s;
             if (!TryGetInfo(blockId, out c, out s)) return false;
+            return s == c.Stages.Count - 1;
+        }
+
+        /// <summary>true, wenn der Block ein Baum ist (Endstufe wie Zwischenstufe).</summary>
+        public static bool IsTree(int blockId)
+        {
+            CropChain c;
+            int s;
+            if (!TryGetInfo(blockId, out c, out s)) return false;
+            return c.IsTree || c.Stages[s].IsTree || IsTreeName(c.Stages[s].Name);
+        }
+
+        /// <summary>
+        /// true, wenn dieser Block per E geerntet werden darf: letzte Stufe UND kein Baum.
+        /// Baeume bleiben bewusst ausgenommen – Vanilla faellt sie per Schlagen (Holz + Setzling);
+        /// ein E-Kommando wuerde den ganzen Baum mit einem Tastendruck einsammeln.
+        /// </summary>
+        public static bool IsHarvestable(int blockId)
+        {
+            CropChain c;
+            int s;
+            if (!TryGetInfo(blockId, out c, out s)) return false;
+            if (c.IsTree || c.Stages[s].IsTree || IsTreeName(c.Stages[s].Name)) return false;
             return s == c.Stages.Count - 1;
         }
 
@@ -298,6 +384,7 @@ namespace FarmSense
             info.Stage = stage + 1;
             info.StageCount = chain.Stages.Count;
             info.IsWild = !chain.IsPlayerCrop;
+            info.IsTree = chain.IsTree || IsTreeName(info.BlockName);
             info.IsReady = (stage == chain.Stages.Count - 1);
             info.IsDead = info.BlockName.IndexOf("Dead", StringComparison.OrdinalIgnoreCase) >= 0;
             info.SecondsTotal = chain.SecondsFrom(stage);

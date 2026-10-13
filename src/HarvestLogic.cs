@@ -19,7 +19,17 @@ namespace FarmSense
         {
             if (b == null || bv.isair) return false;
             if (FarmSenseMain.Config == null || !FarmSenseMain.Config.HarvestByE_Enabled) return false;
-            bool ready = CropRegistry.IsReadyBlock(bv.type);
+
+            // Baeume sind bewusst ausgenommen: Vanilla faellt sie per Schlagen (Holz + Setzling).
+            // Ein E-Kommando an der Endstufe wuerde den ganzen Baum mit einem Tastendruck einsammeln.
+            if (CropRegistry.IsReadyBlock(bv.type) && CropRegistry.IsTree(bv.type))
+            {
+                if (FarmSenseMain.Config.LogDebug)
+                    DiagHarvest(b.GetBlockName() + " (id " + bv.type + ") ist ein Baum - kein E-Kommando");
+                return false;
+            }
+
+            bool ready = CropRegistry.IsHarvestable(bv.type);
             if (ready && FarmSenseMain.Config.LogDebug) DiagHarvest(b.GetBlockName() + " (id " + bv.type + ") ist erntbar");
             return ready;
         }
@@ -68,6 +78,16 @@ namespace FarmSense
 
             Block b = current.Block;
             if (b == null) return false;
+
+            // Sicherheitsnetz fuer alle Aufrufer (auch den MP-Pfad ueber NetPackageFarmSenseHarvest):
+            // Baeume werden nie per E geerntet, nur ueber die normale Schlag-Ernte.
+            if (!CropRegistry.IsHarvestable(current.type))
+            {
+                if (FarmSenseMain.Config != null && FarmSenseMain.Config.LogDebug)
+                    Log.Out("[FarmSense] E-Ernte abgelehnt: " + b.GetBlockName()
+                        + " ist kein Ernteziel (Baum oder keine Endstufe).");
+                return false;
+            }
 
             FarmSenseConfig cfg = FarmSenseMain.Config;
             EntityPlayerLocal local = player as EntityPlayerLocal;

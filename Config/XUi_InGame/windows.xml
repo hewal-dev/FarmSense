@@ -12,10 +12,17 @@
   Anker-Rechnung: bei anchor="Center" ist pos-x der Abstand der LINKEN Fensterkante von der
   Bildschirmmitte – fuer ein zentriertes Feld also -(Breite/2) = -215 bei 430 px Breite.
   pos-y negativ = nach unten (Vanilla-Prompt: 0,55; Block-Health-Fenster: 0,-40).
+
+  Lage: Das Feld sitzt UNTER der Vanilla-Block-Health-Anzeige. Die steht bei pos="0,-40" mit
+  Hoehe 50 (Sprite 0…-12, Textlabel bei -10, Schrift 30) und reicht damit bis rund 90 px unter
+  die Bildmitte – im Fenster darueber (wie bei den ersten Versionen, pos-y -26) lagen HP-Zahlen
+  und Mod-Text uebereinander. pos-y -96 haelt ~6 px Abstand zur HP-Anzeige.
+  Ohne Treffer ist die HP-Anzeige ausgeblendet, das Feld bleibt aber an derselben Stelle
+  (kein Springen beim Schlagen).
 -->
 <configs>
 	<append xpath="/windows">
-		<window name="farmSenseHud" anchor="Center" pos="-215,-26" width="430" height="90"
+		<window name="farmSenseHud" anchor="Center" pos="-215,-96" width="430" height="90"
 		        controller="FarmSenseHud, FarmSense" fade_window="false" cursor_area="false" actionset="false">
 			<sprite depth="1" name="background" sprite="menu_empty3px" type="sliced" color="0,0,0,130" fillcenter="true"/>
 			<sprite depth="2" name="barBG" pos="12,-54" width="406" height="12" sprite="menu_empty" type="sliced" color="0,0,0,220"/>

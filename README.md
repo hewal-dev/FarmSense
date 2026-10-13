@@ -20,8 +20,8 @@ An independent development by **Eltern vs Zombies**, released under the **MIT Li
 | ⚡ **Instant** | Appears as fast as the vanilla name line and disappears again when you look away |
 | 🌿 **Wild plants too** | Wild crops are marked as such in the display |
 | ⚠️ **Warnings** | Tells you when a plant cannot grow here (light, soil) or has died |
-| 🌳 **Trees** | Optional: multi-stage plants such as trees, including the overall time left |
-| ⛏ **Harvest with E** | Ripe crops and wild plants offer a `Harvest` action on `E` |
+| 🌳 **Trees** | Optional: multi-stage plants such as trees, including the overall time left and the tree's own name (for example `Tree Planted Oak`), since the vanilla name line does not name a tree |
+| ⛏ **Harvest with E** | Ripe crops and wild plants offer a `Harvest` action on `E`. Trees are excluded: a grown tree is still felled by hitting it, as in vanilla |
 | 🎁 **Vanilla yields** | Amounts, seed chance, perk and outfit bonuses come from the game's own drop tables |
 | 🔁 **Wild crops that return** | Wild plants reappear over time, similar to vanilla goldenrod or cotton |
 | 🌲 **Pine forest crops** | Corn, potatoes, blueberries and pumpkins grow wild in the pine forest |

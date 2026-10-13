@@ -10,7 +10,7 @@ namespace FarmSense
     public class FarmSenseMain : IModApi
     {
         public const string HarmonyId = "de.elternvszombies.farmsense";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
 
         public static FarmSenseConfig Config = new FarmSenseConfig();
 

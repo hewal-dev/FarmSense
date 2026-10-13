@@ -25,7 +25,7 @@ FarmSense - Crop Info and Harvest with E
 [*]Works with an empty hand and with any tool or weapon in your hand
 [*]Appears immediately, as fast as the vanilla name line, and disappears again as soon as you look away
 [*]Also shows wild plants, which are marked as such
-[*]Optional: multi-stage plants such as trees, including the overall time left
+[*]Optional: multi-stage plants such as trees, including the overall time left and the tree's own name (for example [b]Tree Planted Oak[/b]) - the vanilla name line does not name a tree
 [*]Optional: warning lines when a plant cannot grow here or has died
 [/list]
 
@@ -33,6 +33,7 @@ FarmSense - Crop Info and Harvest with E
 
 [list]
 [*]Ripe crops and wild plants offer a [b]Harvest[/b] action on [b]E[/b]
+[*][b]Trees are excluded:[/b] a grown tree is still felled by hitting it with your tool, exactly as in vanilla. The growth info can still be shown for trees, but without the harvest hint
 [*]The plant is removed and the harvest is placed in your inventory with the vanilla pickup sound and collect popup
 [*]Amounts, seed chance, perk scaling and outfit bonuses come from the game's own drop tables, verified against a manual harvest with bare hands
 [*]Wild plants reappear over time, similar to vanilla wild goldenrod or cotton
@@ -140,6 +141,7 @@ Conflicts are possible with mods that rewrite the crop blocks, replace the plant
 [list]
 [*]The growth percentage now describes the whole growth from seed to ripe and no longer restarts when a plant moves on to its next growth stage. A plant in its second stage now shows its real progress, for example [b]54 % - ready in 58 min[/b] instead of a small value close to the one it showed in the first stage.
 [*]The percentage and the remaining time now always refer to the same thing, so the two values match each other.
+[*]Trees are excluded from the harvest action on [b]E[/b]: a grown tree is still felled by hitting it with your tool, exactly as in vanilla. The growth info can still be shown for trees, but without the harvest hint.
 [/list]
 
 [b]1.0.0[/b]
