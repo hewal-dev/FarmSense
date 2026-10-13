@@ -796,7 +796,7 @@ Stufe 1/3 unverändert 4 %.
 
 **Nicht geändert:** Restzeit, Ernte, Stufenanzeige, Wildwuchs.
 
-## 4y. Release 1.0.1 auf Nexus veröffentlicht (2026-10-13, 18:23 Uhr)
+## 4y. Release 1.0.1 auf Nexus veröffentlicht (2026-10-13, 20:23 Uhr Ortszeit / 18:23 UTC)
 
 **Auslöser:** Hewals Freigabe nach der In-Game-Sichtprüfung des Prozent-Fixes (§4x).
 
