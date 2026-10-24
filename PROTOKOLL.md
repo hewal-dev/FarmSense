@@ -1,6 +1,6 @@
 # FarmSense – Arbeitsprotokoll (Fortsetzung durch jede Session)
 
-**Stand:** 2026-10-17 · Version **1.0.3** (im Livetest, **nicht** veröffentlicht; auf Nexus/GitHub liegt 1.0.2) · Status: **im Livetest bestätigt** (Wachstumsfeld, E-Ernte, Wildwuchs, Vanilla-Erntemengen)
+**Stand:** 2026-10-24 · Version **1.0.3** — **veröffentlicht** (GitHub-Release `v1.0.3`, Nexus-Dateizeile 1.0.3) · Status: **im Livetest bestätigt** (Wachstumsfeld, E-Ernte, Wildwuchs, Vanilla-Erntemengen)
 **Neuester Stand (2026-10-17):** **Samen-Fix §4ae** — die Harvest-Schleife von `GameUtils.HarvestOnAttack` hat Basis-Faktor **0**, nur die Destroy-Schleife **1**; die Mod nutzte für beide 1 und gab dadurch **dreifach** Samen (1,5 statt 0,5 je Beet-Pflanze). Behoben, Version **1.0.3** gebaut und in den Livetest synchronisiert; In-Game-Gegenprobe offen.
 **Arbeitsordner:** `/home/hewal/Hermes/7d2d-v3-mods/FarmSense/` · **Livetest:** `/home/hewal/7 Days/0 einzelne mods/FarmSense/`
 **Spielversion (Belege):** V 3.3.0 (b18), Linux/Mono
@@ -1020,23 +1020,66 @@ Ziel-Gegenprüfung (identischer Hash, 8 Laufzeitdateien, keine Löschungen). Spi
 1 Spore; vorher zusätzlich immer 1) · **Nexus/GitHub bewusst noch auf 1.0.2** — Upload erst nach Hewals Test
 (ausdrücklich so gewünscht) · Release-ZIP für 1.0.3 noch nicht gebaut.
 
-## 4af. Release-Vorbereitung 1.0.3 — ZIP gebaut, Upload wartet auf Freigabe (2026-10-24)
+## 4af. Release 1.0.3 veröffentlicht — GitHub und Nexus (2026-10-24)
 
-**Zustand:** Alles für den Upload fertig, **nichts veröffentlicht** — Nexus und GitHub stehen
-weiterhin auf **1.0.2**. Wartet auf Hewals OK zum Changelog-Text.
+**Zustand:** **1.0.3 ist überall veröffentlicht.** GitHub-Release und Nexus-Dateizeile tragen dieselbe
+Version, dasselbe Archiv und denselben Hash; ältere Versionen bleiben downloadbar.
+
+- **Changelog (Hewals Vorgabe „nur kurz"):** ein Bullet in der Nexus-Dateizeile und in den
+  GitHub-Release-Notes — „Fixed seed inflation: harvested crops give the vanilla seed amount again
+  (0.5 per planted crop instead of 1.5), and wild and POI mushrooms their vanilla 10 % chance of a spore."
+- **GitHub:** Commit `df42f9d` („FarmSense 1.0.3 - vanilla seed amounts") auf `main`, Release
+  **v1.0.3** = Latest, Asset `uploaded`, 24.727 Bytes; Tag `v1.0.3` zeigt auf `df42f9d`.
+- **Nexus:** Dateizeile „FarmSense Crop Info And Harvest With E 1.0.3", Dateiversion **1.0.3**,
+  Modseite **Version 1.0.3**, `Last updated` 24.10.2026 16:24 (Ortszeit Server), Changelog-Popup
+  `Version 1.0.3` mit dem Text oben; 1.0.2/1.0.1/1.0.0 unter „Old files". Kurzzeitig
+  „Virus scanning is in progress" — normal, Freigabe erfolgt automatisch.
+
+### Upload-Weg (neu dokumentiert)
+
+Hochgeladen wurde über eine **eigene Brave-Instanz mit Profilkopie** auf Port 9224 und einem eigenen
+CDP-Client; Hewal hat sich dort einmal selbst angemeldet (keine Zugangsdaten im Chat, kein Vault-Eintrag
+für Nexus vorhanden).
+
+**Wichtig:** Eine Kopie der `Default/Cookies` aus dem laufenden Hauptbrowser reicht **nicht** — Nexus
+rotierte das Session-Token beim ersten Zugriff der Kopie, danach antwortete die Seite mit
+„session expired" / „unauthenticated". Erst die Anmeldung **in der Kopie** liefert eine verwendbare Sitzung.
+
+Ablauf, der funktioniert (Reihenfolge ist entscheidend):
+
+1. `https://www.nexusmods.com/games/7daystodie/mods/13118/edit/files`
+2. **Datei-Input leeren** (`DOM.setFileInputFiles` mit leerer Liste).
+3. In der Dateizeile **`Update`** klicken — nicht den gleichnamigen **Filter-Chip** (`All | Main | Optional |
+   Miscellaneous | Update`); der Zeilen-Knopf ist der mit `closest('table')`.
+4. Erst danach das ZIP auf `input[type=file]:not([accept])` setzen → das Formular
+   (`#display-name`, `#file-version`, „Add changelog", „Save file") baut sich auf.
+5. Haken „Update mod version to match this file's version" (`span[role=checkbox]`, `aria-checked`)
+   per echtem Klick auf `true` setzen.
+6. „Add changelog" → `#file-changelog-text` (der `type_like_human`-Weg genügt hier).
+7. **„Save file"** drücken.
+
+Anzeigename der Zeile nachträglich ändern (nur nötig, wenn er wie hier die alte Version im Namen trägt):
+Zeile → `More actions` → `Edit`. Beide Knöpfe reagieren **nur auf JS-`.click()`**, nicht auf synthetische
+Maus-Events (`aria-expanded` bleibt sonst `false`). Das Feld `#display-name` nimmt Text **ausschließlich**
+über `document.execCommand('insertText', …)` an — nativer Value-Setter, `Input.insertText` und
+`type_like_human` werden von der React-Bindung verworfen, ohne Fehlermeldung. Danach „Save file", Seite
+neu laden, Name prüfen.
+
+**Aufräumen:** Profilkopie enthält Cookies — nach dem Upload löschen (Verzeichnis
+`~/.hermes/cache/scratch/nexus-103/`).
+
+### Prüfstand vor dem Upload
 
 - Frischer Build aus dem aktuellen Quellstand: DLL SHA-256
   `36c212db9157e89111b85f6c77c9cccebe66174ef0db66203e1807cbaf32a220` — **byte-identisch** zum
   bereits im Livetest laufenden 1.0.3-Build (Dev, `dist/` und Livetest gleich).
-- Prüfstand: Harmony-Probe **6/6** („ALLE PATCHES AUFLOESBAR UND ANGEWENDET"), Version im Binary
-  bestätigt (`[FarmSense] Version 1.0.3 wird geladen ...`), `tools/check_harvest_math.py` grün,
+- Harmony-Probe **6/6** („ALLE PATCHES AUFLOESBAR UND ANGEWENDET"), Version im Binary bestätigt
+  (`[FarmSense] Version 1.0.3 wird geladen ...`), `tools/check_harvest_math.py` grün,
   Sync-Trockenlauf ohne Inhaltsänderungen (nur Zeitstempel).
-- **Release-ZIP gebaut:** `releases/FarmSense-Crop-Info-and-Harvest-with-E-1.0.3.zip`,
-  24.727 Bytes, 8 Laufzeitdateien, **SHA-256 `e1e3aea71fcfb89b2c0f37fddbc223f2acaba8f377c84cfa96b0504fecf5250f`**,
+- **Release-ZIP:** `releases/FarmSense-Crop-Info-and-Harvest-with-E-1.0.3.zip`, 24.727 Bytes,
+  8 Laufzeitdateien, **SHA-256 `e1e3aea71fcfb89b2c0f37fddbc223f2acaba8f377c84cfa96b0504fecf5250f`**,
   `validate_release_zip.py` → **PASS**, DLL im Archiv mit identischem Hash, keine Harmony-DLL.
-- **Changelog-Texte formuliert** (Nexus-Dateifeld kurz, GitHub-Release-Notes ausführlich).
-- **Offen bis zur Freigabe:** Commit + Push nach GitHub (`main`, Release `v1.0.3`), Nexus-Dateizeile
-  `Update` auf 1.0.3 mit gesetztem Datei-Changelog.
+  Dasselbe Archiv liegt als GitHub-Release-Asset (24.727 Bytes) — die beiden Kopien sind vergleichbar.
 
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 
