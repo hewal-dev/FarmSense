@@ -1,7 +1,7 @@
 # FarmSense – Arbeitsprotokoll (Fortsetzung durch jede Session)
 
-**Stand:** 2026-10-12 · Version **1.0.0** (Nexus/GitHub, veröffentlicht) · Status: **im Livetest bestätigt** (Wachstumsfeld, E-Ernte, Wildwuchs, Vanilla-Erntemengen)
-**Neuester Stand (2026-10-13):** **Prozent-Fix §4x** (Prozent gegen das Gesamtwachstum statt gegen die Restkette) gebaut, geprüft und synchronisiert — DLL `de901eec…`; In-Game-Gegenprobe und Release 1.0.1 offen.
+**Stand:** 2026-10-17 · Version **1.0.3** (im Livetest, **nicht** veröffentlicht; auf Nexus/GitHub liegt 1.0.2) · Status: **im Livetest bestätigt** (Wachstumsfeld, E-Ernte, Wildwuchs, Vanilla-Erntemengen)
+**Neuester Stand (2026-10-17):** **Samen-Fix §4ae** — die Harvest-Schleife von `GameUtils.HarvestOnAttack` hat Basis-Faktor **0**, nur die Destroy-Schleife **1**; die Mod nutzte für beide 1 und gab dadurch **dreifach** Samen (1,5 statt 0,5 je Beet-Pflanze). Behoben, Version **1.0.3** gebaut und in den Livetest synchronisiert; In-Game-Gegenprobe offen.
 **Arbeitsordner:** `/home/hewal/Hermes/7d2d-v3-mods/FarmSense/` · **Livetest:** `/home/hewal/7 Days/0 einzelne mods/FarmSense/`
 **Spielversion (Belege):** V 3.3.0 (b18), Linux/Mono
 
@@ -963,6 +963,80 @@ Feld unter der HP-Anzeige) plus den bereits in 1.0.1 veröffentlichten Prozent-F
   normal, der Download wird nach dem Scan automatisch freigeschaltet.
 * **Changelog-Text an der Datei (englisch):** Bäume nicht mehr per E erntbar, Baumname im Feld,
   Feld unter der HP-Anzeige, Prozentwert beschreibt das Gesamtwachstum.
+
+## 4ae. Samen-Inflation erneut gefunden und behoben — Basis-Faktor der Harvest-Schleife (2026-10-17)
+
+**Hewals Befund:** „Es gibt viel zu viel Samen von Pilze (ist auf jeden Fall nicht die Vanilla Menge)“ —
+Pilzplantage, E-Ernte, deutlich mehr Pilzsporen als in Vanilla.
+
+**Ursache (im IL der installierten V 3.3.0 b18 belegt, `ikdasm Assembly-CSharp.dll`):**
+`GameUtils.HarvestOnAttack` läuft über **zwei** Tabellen — und die haben **unterschiedliche Basis-Faktoren**:
+
+```csharp
+// Schleife A  – EnumDropEvent.Destroy (0), nur bei bKilled, EINE Rate
+IL_0228:  ldc.r4   1     // Basis 1
+IL_0390:  prob-Wurf des Eintrags -> collectHarvestedItem(..., prob=1f, scale=false)
+// Schleife B  – EnumDropEvent.Harvest (2), bei jedem Treffer, ZWEI Raten
+IL_04ce:  ldc.r4   0.0   // Basis 0        <-- hier lag der Fehler
+IL_0671:  2/3 sofort (prob, scale=true) · IL_06f4: 1/3 bei bKilled (prob, scale=false)
+```
+
+Damit greift `<drop event="Harvest" name="plantedMushroom1" count="1" tag="farmerBonusSeed"/>` **ohne
+Landwirt-Stiefel nicht**: Basis 0 + `HarvestCount base_set 0`-Liste in `entityclasses.xml` (dort stehen
+`bonusCropHarvest,farmerBonusHarvest` — **`farmerBonusSeed` nicht**) ⇒ Faktor 0 ⇒ Eintrag entfällt. Der Samen
+kommt in Vanilla ausschließlich aus der **Destroy**-Tabelle (`Destroy plantedX1 count=1 prob=0.5` = 0,5 Samen).
+
+Die Mod setzte in `RollVanillaTable` für **beide** Tabellen `factor = 1f` und vergab damit 1 Samen garantiert
+(`farmerBonusSeed`) **plus** 0,5 (`Destroy`) = **1,5 Samen pro Ernte — dreifach**. Die frühere Deutung in §4o
+(„`farmerBonusSeed` Basis 1“) war falsch: die damalige Vanilla-Logzeile
+`Abgabe (Vanilla-Schlag): plantedPotato1 x1 prob=1 … aus` stammt aus Schleife A (Destroy, prob im Aufruf 1,
+`scale=false`), nicht aus dem `farmerBonusSeed`-Eintrag.
+
+**Fix:** `src/HarvestLogic.cs` — Basis-Faktor je Tabelle (`Harvest` 0, `Destroy` 1) und die Destroy-Tabelle
+gibt die volle Menge in **einer** Rate aus (vorher wurde dort die Drittel-Teilung der Harvest-Tabelle
+angewandt, was Mengen ≥ 3 verkürzt hätte). Nur der Samenertrag ändert sich; die Früchte kommen aus
+`cropHarvest` und werden vom Perk-Wert überschrieben, bleiben also unverändert. `HarvestDiagnostics` rechnet
+jetzt beide Tabellen mit dem richtigen Basiswert nach.
+
+**Nachrechnung gegen die echten Drop-Tabellen** (`tools/check_harvest_math.py`, neu; liest
+`Data/Config/blocks.xml` der installierten Fassung, Rechnung wie Vanilla):
+
+| Pflanze (aus Samen) | vorher (1.0.2) | jetzt (1.0.3) |
+|---|---|---|
+| alle 13 `…HarvestPlayer`-Kulturen inkl. **Pilz** | 2,0 Früchte / **1,5 Samen** | 2,0 Früchte / **0,5 Samen** |
+| LotL 3/3 + Landwirt-Stiefel Q6 | 6,5 / 1,7 | 6,5 / **0,7** |
+| POI-Pilz (`mushroomBiome2/4`, `Destroy … prob=0.1`) | 1,0 / 1,1 | 1,0 / **0,1** |
+| Wasteland-Pilz (`mushroomRadiated02/04`, kein Samen-Eintrag) | 1,0 / 0,0 | unverändert |
+
+Skript-Ausgabe: **Prüfung bestanden** (Sollwerte 2,0 / 0,5 bzw. 1,5 vor dem Fix).
+
+**Prüfstand:** Build fehlerfrei · **Harmony-Probe 6/6** („ALLE PATCHES AUFLOESBAR UND ANGEWENDET“) ·
+im IL der gebauten DLL nachgeprüft: `ldarg ev; ldc.i4.2; bne.un → 0.0f : 1.0f` · Version **1.0.3** im Binary
+(`strings -el` → `[FarmSense] Version 1.0.3 wird geladen ...`) · **DLL SHA-256
+`36c212db9157e89111b85f6c77c9cccebe66174ef0db66203e1807cbaf32a220`** · Sync in den Livetest mit
+Ziel-Gegenprüfung (identischer Hash, 8 Laufzeitdateien, keine Löschungen). Spiel-Neustart durch Hewal nötig.
+
+**Offen:** In-Game-Gegenprobe (eine Pilzpflanze mit `LogDebug=true` ernten → 2 Pilze + in ~50 % der Fälle
+1 Spore; vorher zusätzlich immer 1) · **Nexus/GitHub bewusst noch auf 1.0.2** — Upload erst nach Hewals Test
+(ausdrücklich so gewünscht) · Release-ZIP für 1.0.3 noch nicht gebaut.
+
+## 4af. Release-Vorbereitung 1.0.3 — ZIP gebaut, Upload wartet auf Freigabe (2026-10-24)
+
+**Zustand:** Alles für den Upload fertig, **nichts veröffentlicht** — Nexus und GitHub stehen
+weiterhin auf **1.0.2**. Wartet auf Hewals OK zum Changelog-Text.
+
+- Frischer Build aus dem aktuellen Quellstand: DLL SHA-256
+  `36c212db9157e89111b85f6c77c9cccebe66174ef0db66203e1807cbaf32a220` — **byte-identisch** zum
+  bereits im Livetest laufenden 1.0.3-Build (Dev, `dist/` und Livetest gleich).
+- Prüfstand: Harmony-Probe **6/6** („ALLE PATCHES AUFLOESBAR UND ANGEWENDET"), Version im Binary
+  bestätigt (`[FarmSense] Version 1.0.3 wird geladen ...`), `tools/check_harvest_math.py` grün,
+  Sync-Trockenlauf ohne Inhaltsänderungen (nur Zeitstempel).
+- **Release-ZIP gebaut:** `releases/FarmSense-Crop-Info-and-Harvest-with-E-1.0.3.zip`,
+  24.727 Bytes, 8 Laufzeitdateien, **SHA-256 `e1e3aea71fcfb89b2c0f37fddbc223f2acaba8f377c84cfa96b0504fecf5250f`**,
+  `validate_release_zip.py` → **PASS**, DLL im Archiv mit identischem Hash, keine Harmony-DLL.
+- **Changelog-Texte formuliert** (Nexus-Dateifeld kurz, GitHub-Release-Notes ausführlich).
+- **Offen bis zur Freigabe:** Commit + Push nach GitHub (`main`, Release `v1.0.3`), Nexus-Dateizeile
+  `Update` auf 1.0.3 mit gesetztem Datei-Changelog.
 
 ## 5. Testanleitung (offen – von Hewal durchzuführen)
 

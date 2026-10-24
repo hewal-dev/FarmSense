@@ -127,23 +127,36 @@ namespace FarmSense
         /// <summary>
         /// Ertrag wie Vanilla — eigener Nachbau der Rechnung aus <c>GameUtils.HarvestOnAttack</c>
         /// (V 3.3.0 b18, per IL verifiziert).
-        /// <para>Je Drop-Eintrag:</para>
+        /// <para>Wichtig: Vanilla laeuft dort <b>zwei</b> Schleifen ueber zwei verschiedene Tabellen
+        /// (<c>EnumDropEvent.Destroy = 0</c>, <c>Harvest = 2</c>) — mit <b>unterschiedlichem
+        /// Basis-Faktor</b>:</para>
+        /// <list type="bullet">
+        /// <item><b>Destroy-Tabelle</b> (Schluessel 0, IL_0228): Basis <c>1</c>, laeuft nur beim
+        /// vernichtenden Treffer (<c>bKilled</c>), <b>keine</b> Raten-Teilung, <c>prob</c> wird vorher
+        /// gewuerfelt, Abgabe mit <c>prob=1</c>. → hierher gehoert der Setzling der Beet-Pflanzen
+        /// (<c>Destroy plantedX1 count=1 prob=0.5</c>).</item>
+        /// <item><b>Harvest-Tabelle</b> (Schluessel 2, IL_04ce): Basis <c>0</c>, laeuft bei jedem
+        /// Treffer, Ausgabe in <b>zwei Raten</b> (<c>gesamt − gesamt/3</c> sofort, <c>gesamt/3</c> beim
+        /// Zerstoeren). Eintraege, deren <c>tag</c> der Spieler nicht bedient, fallen mit Basis 0 auf
+        /// Faktor 0 und entfallen — genau wie im Spiel (z. B. <c>farmerBonusSeed</c> ohne
+        /// Landwirt-Stiefel).</item>
+        /// </list>
+        /// <para>Je Eintrag:</para>
         /// <list type="number">
-        /// <item>Basis <c>f</c> = 1; bei Eintraegen mit <c>tool_category</c> = 0 (Bonus aus ToolBonuses).</item>
+        /// <item>Basis <c>f</c> = 1 (Destroy) bzw. 0 (Harvest); bei Eintraegen mit
+        /// <c>tool_category</c> = 0 (Bonus aus ToolBonuses).</item>
         /// <item>Bei <c>tag</c>: <c>f = EffectManager.GetValue(PassiveEffects.HarvestCount, gehaltenesItem, f,
         /// Spieler, null, FastTags.Parse(tag))</c> → Perk „Farmer“ + Kleidungs-/Werkzeugeffekte.</item>
         /// <item><c>gesamt = (int)(RandomRange(minCount, maxCount+1) * f)</c>; bei &lt;= 0 entfaellt der Eintrag.</item>
         /// <item>Ausgabemodifikator <c>m</c> aus <c>XUiM_Recipes</c> (seedMulti / crop / ore / sonst).</item>
-        /// <item>Ausgabe in <b>zwei Raten</b> — Vanilla teilt die Menge eines sterbenden Blocks:
-        /// <c>gesamt − gesamt/3</c> sofort und <c>gesamt/3</c> beim Zerstoeren. Wir ernten und zerstoeren in
-        /// einem Schritt, also beide Raten → zusammen genau <c>gesamt</c>.</item>
+        /// <item>Abgabe: Destroy in einer Rate, Harvest in zwei Raten (zusammen genau <c>gesamt</c>).</item>
         /// </list>
         /// <para>
         /// <b>Wichtig:</b> Die Menge wird hier mit <c>_bScaleCountOnDamage = false</c> an
-        /// <c>GameUtils.collectHarvestedItem</c> uebergeben. Vanilla uebergibt in dieser Rate <c>true</c> und
-        /// skaliert ueber <c>attackDetails.damageMax/damageGiven/damageTotalOfTarget</c>; mit selbst gebauten
-        /// Trefferdaten teilt diese Rechnung durch <c>damageMax/count = 0</c> und vernichtet die Menge
-        /// (Ergebnis: gar keine Items). Ohne Werkzeug-Attacke sind die echten Schadenswerte nicht
+        /// <c>GameUtils.collectHarvestedItem</c> uebergeben. Vanilla uebergibt in der ersten Rate <c>true</c>
+        /// und skaliert ueber <c>attackDetails.damageMax/damageGiven/damageTotalOfTarget</c>; mit selbst
+        /// gebauten Trefferdaten teilt diese Rechnung durch <c>damageMax/count = 0</c> und vernichtet die
+        /// Menge (Ergebnis: gar keine Items). Ohne Werkzeug-Attacke sind die echten Schadenswerte nicht
         /// reproduzierbar — die volle Menge ist das gewuenschte Ergebnis („Pflanze mit einem Hieb ernten“).
         /// </para>
         /// </summary>
@@ -182,7 +195,12 @@ namespace FarmSense
                 Block.SItemDropProb d = list[i];
                 if (string.IsNullOrEmpty(d.name)) continue;
 
-                float factor = 1f;
+                // Basis-Faktor der Tabelle, exakt wie Vanilla (IL 3.3.0 b18):
+                // Harvest-Schleife (Schluessel 2) startet mit 0 (IL_04ce), Destroy-Schleife
+                // (Schluessel 0) mit 1 (IL_0228). Eintraege, deren `tag` kein passiver Wert
+                // zugeordnet ist (z. B. `farmerBonusSeed` ohne Landwirt-Stiefel), fallen damit
+                // auf 0 und entfallen – genau wie im Spiel.
+                float factor = (ev == EnumDropEvent.Harvest) ? 0f : 1f;
                 if (!string.IsNullOrEmpty(d.toolCategory)) factor = 0f;
                 if (!string.IsNullOrEmpty(d.tag))
                 {
@@ -223,10 +241,21 @@ namespace FarmSense
                     total = (int)(total * cfg.Harvest_YieldMultiplier + 0.5f);
                 if (total <= 0) continue;
 
+                if (!twoInstalments)
+                {
+                    // Destroy-Tabelle: Vanilla gibt die volle Menge in EINER Rate aus
+                    // (IL_0228 … IL_0409, `prob` wird vorher gewuerfelt, Abgabe mit prob=1) –
+                    // hier gibt es keine Drittel-Teilung wie in der Harvest-Tabelle. Genau aus
+                    // dieser Tabelle kommt der Setzling der Beet-Pflanzen
+                    // (`Destroy plantedX1 count=1 prob=0.5`).
+                    Grant(ad, iv, Mathf.Max(1, (int)(total * outMod)), d.prob, entity, cfg, rnd, ref log);
+                    continue;
+                }
+
+                // Harvest-Tabelle: zwei Raten wie Vanilla (2/3 sofort + 1/3 beim Zerstoeren) –
+                // zusammen genau `total`.
                 int first = total - total / 3;
                 if (first > 0) Grant(ad, iv, Mathf.Max(1, (int)(first * outMod)), d.prob, entity, cfg, rnd, ref log);
-
-                if (!twoInstalments) continue;
 
                 int second = total / 3;
                 float prob = d.prob;
